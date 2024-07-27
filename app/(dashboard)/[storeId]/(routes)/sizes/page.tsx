@@ -1,15 +1,15 @@
 import prismadb from "@/lib/prismadb";
-import { BillboardClient } from "./components/client";
-import { BillboardColumn } from "./components/colums";
+import { SizesClient } from "./components/client";
+import { SizeColumn } from "./components/colums";
 import { orderBy } from "firebase/firestore";
 import { format } from "date-fns";
 
-export default async function BillboardsPage({
+export default async function SizesPage({
   params,
 }: {
   params: { storeId: string };
 }) {
-  const billboards = await prismadb.billboard.findMany({
+  const sizes = await prismadb.size.findMany({
     where: {
       storeId: params.storeId,
     },
@@ -18,16 +18,16 @@ export default async function BillboardsPage({
     },
   });
 
-  const formattedBillboards: BillboardColumn[] = billboards.map((item) => ({
+  const formattedSizes: SizeColumn[] = sizes.map((item) => ({
     id: item.id,
-    label: item.label,
-    imageUrl: item.imageUrl,
+    name: item.name,
+    value: item.value,
     createdAt: format(item.createdAt, "MMMM do, yyyy"),
   }));
   return (
     <div className="flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">
-        <BillboardClient data={formattedBillboards} />
+        <SizesClient data={formattedSizes} />
       </div>
     </div>
   );

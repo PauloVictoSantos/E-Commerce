@@ -13,7 +13,7 @@ export type CategoryColumns = {
   createdAt: string;
 };
 
-export const columns: ColumnDef<CategoryColumns>[] = [
+export const Columns: ColumnDef<CategoryColumns>[] = [
 {
     accessorKey: "name",
     header: ({ column }) => {

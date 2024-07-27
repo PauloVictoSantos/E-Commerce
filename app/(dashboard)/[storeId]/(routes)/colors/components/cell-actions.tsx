@@ -1,8 +1,10 @@
 "use client";
 
+import { Copy, Edit, MoreVertical, Trash } from "lucide-react";
+import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
-import { BillboardColumns } from "./colums";
 import { useState } from "react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,15 +14,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Copy, Edit, MoreVertical, Trash } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { deleteObject, ref } from "firebase/storage";
-import { storage } from "@/lib/firebase";
-import axios from "axios";
 import { AlertModal } from "@/components/modal/alert-modal";
+import { ColorColumn } from "./colums";
 
 interface CellActionProps {
-  data: BillboardColumns;
+  data: ColorColumn;
 }
 export const CellAction = ({ data }: CellActionProps) => {
   const { toast } = useToast();
@@ -32,23 +31,20 @@ export const CellAction = ({ data }: CellActionProps) => {
 
   const onCopy = (id: string) => {
     navigator.clipboard.writeText(id);
-    toast({ title: "Billboard id copied to clipboard" });
+    toast({ title: "Color id copied to clipboard" });
   };
 
   const onDelete = async () => {
     try {
       setIsLoading(true);
-      await deleteObject(ref(storage, data.imageUrl)).then(async () => {
-        await axios.delete(`/api/${params.storeId}/billboards/${data.id}`);
-      });
-      toast({ title: "Billboard Removed" });
+      await axios.delete(`/api/${params.storeId}/colors/${data.id}`);
+      toast({ title: "Color Removed" });
       router.refresh();
-      router.push(`/${params.storeId}/billboards`);
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete billboard",
+        description: "Failed to delete color",
       });
       console.log(error);
     } finally {
@@ -80,7 +76,7 @@ export const CellAction = ({ data }: CellActionProps) => {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() =>
-              router.push(`/${params.storeId}/billboards/${data.id}`)
+              router.push(`/${params.storeId}/colors/${data.id}`)
             }
           >
             <Edit className="h-4 w-4 mr-2" />

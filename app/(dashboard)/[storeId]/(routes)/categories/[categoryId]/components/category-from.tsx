@@ -5,13 +5,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
-import { deleteObject, ref } from "firebase/storage";
 import axios from "axios";
 
 import { Heading } from "@/components/heading";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Billboards, Category } from "@/types/types-db";
+import {Billboard, Category } from "@prisma/client";
 import {
   Form,
   FormControl,
@@ -31,22 +30,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface CategoryFormProps {
-  initialData: Category;
-  billboards: Billboards[];
-}
-
 const formSchema = z.object({
   name: z.string().min(1),
   billboardId: z.string().min(1),
 });
+
+interface CategoryFormProps {
+  initialData: Category | null
+  billboards: Billboard[]
+}
 
 export function CategoryForm({ initialData, billboards }: CategoryFormProps) {
   console.log("initialData:", initialData);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData,
+    defaultValues: initialData || {
+      name: "",
+      billboardId:""
+    },
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -55,7 +57,7 @@ export function CategoryForm({ initialData, billboards }: CategoryFormProps) {
   const params = useParams();
   const router = useRouter();
 
-  const label = initialData ? "Edit Category" : "Create Category";
+  const title = initialData ? "Edit Category" : "Create Category";
   const description = initialData ? "Edit a Category" : "Add a new Category";
   const toastMessage = initialData ? "Category Updated" : "Category Created";
   const action = initialData ? "Save Changes" : "Create Category";
@@ -63,20 +65,10 @@ export function CategoryForm({ initialData, billboards }: CategoryFormProps) {
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
-
-      const {billboardId: formBillId} = form.getValues()
-      const matchingBillboard = billboards.find((item) => item.id === formBillId)
-      
-      if (initialData) {
-        await axios.patch(
-          `/api/${params.storeId}/categories/${params.categoryId}`,
-          data
-        );
+     if (initialData) {
+        await axios.patch(`/api/${params.storeId}/categories/${params.categoryId}`, data);
       } else {
-        await axios.post(`/api/${params.storeId}/categories`, {
-          ...data,
-          billboardLabel: matchingBillboard?.label
-        });
+        await axios.post(`/api/${params.storeId}/categories`, data,);
       }
       toast({ title: "Success", description: toastMessage });
       router.push(`/${params.storeId}/categories`);
@@ -124,7 +116,7 @@ export function CategoryForm({ initialData, billboards }: CategoryFormProps) {
         loading={isLoading}
       />
       <div className="flex items-center justify-center">
-        <Heading title={label} description={description} />
+        {/* <Heading title={label} description={description} /> */}
         {initialData && (
           <Button
             disabled={isLoading}
