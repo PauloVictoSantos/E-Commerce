@@ -21,6 +21,7 @@ interface ImageUploadProps {
   onRemove: (value: string) => void;
   value: string[];
 }
+
 export const ImageUpload = ({
   disabled,
   onChange,
@@ -41,36 +42,52 @@ export const ImageUpload = ({
     return null;
   }
 
-  const onUpload = async (e: any) => {
-    const file = e.target.files[0];
+  const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) {
+      return;
+    }
+
+    const files = Array.from(e.target.files);
     setIsLoading(true);
 
-    const uploadTask = uploadBytesResumable(
-      ref(storage, `Images/${Date.now()}-${file.name}`),
-      file,
-      { contentType: file.type }
-    );
+    const uploadPromises = files.map((file) => {
+      return new Promise<void>((resolve, reject) => {
+        const uploadTask = uploadBytesResumable(
+          ref(storage, `Images/${Date.now()}-${file.name}`),
+          file,
+          { contentType: file.type }
+        );
 
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        setProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-      },
-      (error) => {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
-        });
-        setIsLoading(false);
-      },
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          onChange(downloadURL);
-          setIsLoading(false);
-        });
-      }
-    );
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            setProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          },
+          (error) => {
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: error.message,
+            });
+            setIsLoading(false);
+            reject(error);
+          },
+          () => {
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              onChange(downloadURL);
+              setIsLoading(false);
+              resolve();
+            });
+          }
+        );
+      });
+    });
+
+    try {
+      await Promise.all(uploadPromises);
+    } catch (error) {
+      console.error("Failed to upload images:", error);
+    }
   };
 
   const onDelete = (url: string) => {
@@ -124,12 +141,13 @@ export const ImageUpload = ({
               <label>
                 <div className="w-full h-full flex flex-col gap-2 items-center justify-center cursor-pointer">
                   <ImagePlus className="h-4 w-4" />
-                  <p>Upload an image</p>
+                  <p>Upload images</p>
                 </div>
                 <input
                   type="file"
                   onChange={onUpload}
                   accept="image/*"
+                  multiple
                   className="w-0 h-0"
                 />
               </label>

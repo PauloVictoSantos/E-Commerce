@@ -116,7 +116,7 @@ export function CategoryForm({ initialData, billboards }: CategoryFormProps) {
         loading={isLoading}
       />
       <div className="flex items-center justify-center">
-        {/* <Heading title={label} description={description} /> */}
+        <Heading title={title} description={description} />
         {initialData && (
           <Button
             disabled={isLoading}
